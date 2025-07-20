@@ -45,15 +45,21 @@ def predict():
         data = request.get_json()
         df = pd.DataFrame([data])
         prediction_raw = model.predict(df)[0]
-        prediction = prediction_raw.lower()  # Wajib agar cocok dengan kamus dan URL
+
+        # Sanitize: hapus spasi dan ubah ke lowercase
+        prediction = prediction_raw.strip().lower()
+
+        rekomendasi = kamus.get(prediction, prediction)
+        gambar = gambar_url.get(prediction, "https://via.placeholder.com/150?text=Gambar+Tidak+Ditemukan")
 
         return jsonify({
-            "rekomendasi": kamus.get(prediction, prediction),
-            "gambar": gambar_url.get(prediction)
+            "rekomendasi": rekomendasi,
+            "gambar": gambar
         })
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
