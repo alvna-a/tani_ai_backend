@@ -58,7 +58,7 @@ def predict():
     try:
         data = request.get_json()
         df = pd.DataFrame([data])
-        prediction = model.predict(df)[0].lower()
+        prediction = model.predict(df)[0].lower()  # ⬅️ memastikan lowercase agar cocok dengan kamus & gambar
 
         return jsonify({
             "rekomendasi": kamus.get(prediction, prediction),
