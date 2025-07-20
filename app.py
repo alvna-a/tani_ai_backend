@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS  # ✅ Tambahan untuk CORS
 import pandas as pd
 import joblib
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # ✅ Inilah baris penting agar Netlify bisa akses backend ini
 
 model = joblib.load("crop_model.pkl")
 
