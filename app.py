@@ -58,7 +58,7 @@ def predict():
     try:
         data = request.get_json()
         df = pd.DataFrame([data])
-        prediction = model.predict(df)[0]
+        prediction = model.predict(df)[0].lower()
 
         return jsonify({
             "rekomendasi": kamus.get(prediction, prediction),
