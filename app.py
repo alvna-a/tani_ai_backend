@@ -7,25 +7,25 @@ import logging
 
 # Setup Flask
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Memperbolehkan semua origin (Netlify, Vercel, dll)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Logging aktif
+# Logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Health check endpoint
 @app.route('/')
 def home():
-    return "TaniAI Backend Aktif!"
+    return "🚀 TaniAI Backend Aktif!", 200
 
-# Load model (debug jika gagal)
+# Load model
 try:
     model = joblib.load("crop_model.pkl")
-    app.logger.info("Model berhasil dimuat.")
+    app.logger.info("✅ Model berhasil dimuat.")
 except Exception as e:
-    app.logger.error(f"Gagal memuat model: {e}")
+    app.logger.error(f"❌ Gagal memuat model: {e}")
     model = None
 
-# Kamus bahasa Indonesia dan gambar
+# Kamus hasil terjemahan dari label model
 kamus = {
     'rice': 'padi',
     'maize': 'jagung',
@@ -44,6 +44,7 @@ kamus = {
     'coffee': 'kopi'
 }
 
+# Link gambar dari GitHub
 gambar_url = {
     key: f"https://raw.githubusercontent.com/alvna-a/tani_ai2/main/gambar/{key}.jpg"
     for key in kamus
@@ -57,13 +58,13 @@ def predict():
 
     try:
         data = request.get_json()
-        app.logger.debug(f"Data diterima: {data}")
+        app.logger.debug(f"📨 Data diterima: {data}")
 
         df = pd.DataFrame([data])
         prediction_raw = model.predict(df)[0]
 
         prediction = prediction_raw.strip().lower()
-        app.logger.debug(f"Hasil prediksi mentah: {prediction_raw}")
+        app.logger.debug(f"🔍 Hasil prediksi mentah: {prediction_raw}")
 
         rekomendasi = kamus.get(prediction, prediction)
         gambar = gambar_url.get(prediction, "https://via.placeholder.com/150?text=Gambar+Tidak+Ditemukan")
@@ -74,10 +75,10 @@ def predict():
         })
 
     except Exception as e:
-        app.logger.error(f"Error saat prediksi: {e}")
+        app.logger.error(f"❗ Error saat prediksi: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# Jalankan server
+# Jalankan server jika lokal
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
