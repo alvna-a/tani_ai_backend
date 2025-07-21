@@ -3,19 +3,29 @@ from flask_cors import CORS
 import pandas as pd
 import joblib
 import os
+import logging
 
+# Setup Flask
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Memperbolehkan semua origin (Netlify, Vercel, dll)
+
+# Logging aktif
+logging.basicConfig(level=logging.DEBUG)
 
 # Health check endpoint
 @app.route('/')
 def home():
     return "TaniAI Backend Aktif!"
 
-# Load model
-model = joblib.load("crop_model.pkl")
+# Load model (debug jika gagal)
+try:
+    model = joblib.load("crop_model.pkl")
+    app.logger.info("Model berhasil dimuat.")
+except Exception as e:
+    app.logger.error(f"Gagal memuat model: {e}")
+    model = None
 
-# Kamus terjemahan dan gambar
+# Kamus bahasa Indonesia dan gambar
 kamus = {
     'rice': 'padi',
     'maize': 'jagung',
@@ -39,15 +49,21 @@ gambar_url = {
     for key in kamus
 }
 
+# Endpoint prediksi
 @app.route('/predict', methods=['POST'])
 def predict():
+    if model is None:
+        return jsonify({"status": "error", "message": "Model belum dimuat"}), 500
+
     try:
         data = request.get_json()
+        app.logger.debug(f"Data diterima: {data}")
+
         df = pd.DataFrame([data])
         prediction_raw = model.predict(df)[0]
 
-        # Sanitize: hapus spasi dan ubah ke lowercase
         prediction = prediction_raw.strip().lower()
+        app.logger.debug(f"Hasil prediksi mentah: {prediction_raw}")
 
         rekomendasi = kamus.get(prediction, prediction)
         gambar = gambar_url.get(prediction, "https://via.placeholder.com/150?text=Gambar+Tidak+Ditemukan")
@@ -58,9 +74,10 @@ def predict():
         })
 
     except Exception as e:
+        app.logger.error(f"Error saat prediksi: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-
+# Jalankan server
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
